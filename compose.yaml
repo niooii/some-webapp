@@ -1,15 +1,51 @@
 services:
+  # frontend:
+  #   container_name: frontend
+  #   build: ./frontend/
+  #   ports:
+  #     - 8088:8088
+  #   environment:
+  #     - NEXT_TELEMETRY_DISABLED=1
+  #     - NODE_ENV=development
+  #   depends_on:
+  #     - backend
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #     - /app/.next
+
+  # backend:
+  #   container_name: backend
+  #   build: ./backend/
+  #   restart: always
+  #   ports:
+  #     - 9099:9099
+  #   environment:
+  #     - RUST_BACKTRACE=1
+  #     - DATABASE_URL=postgres://niooi:abcde@db:5432/postgres
+  #   depends_on:
+  #     - db
+
   db:
     container_name: db
-    image: postgres
+    image: postgres:16
+    restart: always
     environment:
       POSTGRES_USER: niooi
-      POSTGRES_PASSWORD: abcde12345
+      POSTGRES_PASSWORD: abcde
       POSTGRES_DB: postgres
     ports:
-      - 5432:5432
+      - 0.0.0.0:9432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  admin:
+    image: adminer
+    restart: always
+    depends_on: 
+      - db
+    ports:
+      - 8080:8080
+
 volumes:
-  pgdata: {}
+  pgdata: 
