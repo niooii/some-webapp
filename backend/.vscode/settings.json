@@ -1,7 +1,5 @@
 {
     "rust-analyzer.linkedProjects": [
-        ".\\main-api\\Cargo.toml",
-        ".\\db-interface\\Cargo.toml",
-        ".\\db-interface\\Cargo.toml"
+        ".\\main-api\\Cargo.toml"
     ]
 }

@@ -1,41 +1,57 @@
-use db_interface::database::{
-    self, 
-    message_to_world::MessageToWorld
-};
+mod error;
+use error::{Error, Result};
+mod web;
 
-use std::time::{
-    SystemTime,
-    UNIX_EPOCH
-};
+use axum::{Router, routing::{get, get_service}, response::{Html, IntoResponse, Response}, extract::Query, middleware};
+use serde::Deserialize;
+use tokio::net::TcpListener;
+use tower_http::services::ServeDir;
+use tower_cookies::CookieManagerLayer;
 
-use std::sync::Arc;
-use std::{
-    error::Error,
-    fs::{self, File},
-};
-use anyhow::Result;
-use dotenv::dotenv;
-
-// use simplelog::{CombinedLogger, LevelFilter, SimpleLogger, WriteLogger};
+struct DbInfo {
+    user: String,
+    pass: String,
+}
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
+    let routes_all = Router::new().route(
+        "/hello", 
+        get(handler_hello)
+    )
+        .merge(web::routes_login::routes())
+        .layer(middleware::map_response(main_response_mapper))
+        .layer(CookieManagerLayer::new())
+        .fallback_service(routes_static());
 
-    const DB_URL: &str = "postgres://niooi:abcde@localhost:9432/postgres";
+    // start server
+    let addr = "127.0.0.1:8082";
+    let listener = TcpListener::bind(addr).await.unwrap();
+    println!("-> LISTENING on {addr}\n");
 
-    db_interface::init_pool().await?;
+    axum::serve(listener, routes_all.into_make_service()).await.unwrap();
+}
 
-    let testmsg = MessageToWorld {
-        title: "SOME TITLE".to_string(),
-        content: "danile park gay".to_string(),
-        time_created: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs_f64() as i64
-    };
+async fn main_response_mapper(res: Response) -> Response {
+    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
 
-    database::message_to_world::save(&testmsg).await?;
+    println!();
+    res
+}
 
-    // let pool = sqlx::postgres::PgPool::connect(DB_URL).await?;
+fn routes_static() -> Router {
+    Router::new().nest_service("/", get_service(ServeDir::new("./")))
+}
 
-    // 
+#[derive(Debug, Deserialize)]
+struct HelloParams {
+    name: Option<String>
+}
 
-    Ok(())
+async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
+    println!("->> {:<12} - handler_hello", "HANDLER");
+
+    let name = params.name.as_deref().unwrap_or("world");
+
+    Html(format!("Hello <strong>{name}!!!!!</strong>"))
 }

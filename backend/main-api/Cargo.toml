@@ -6,12 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.7.3"
 dotenv = "0.15.0"
 tokio = { version = "1", features = ["full"] }
 lazy_static = "1.4.0"
-anyhow = "1.0.78"
-serde_json = "1.0.108"
-serde = "1.0.193"
+anyhow = "1"
+serde_json = "1"
+serde = {version = "1", features = ["derive"]}
+axum = {version = "0.7.3", features = ["macros"]}
+tower-http = { version = "0.5.0", features = ["fs"] }
+tower-cookies = "0.10.0"
 
-db-interface ={ path="../db-interface" }
+[dev-dependencies]
+httpc-test = "0.1.1"
+anyhow = "1.0.78"
