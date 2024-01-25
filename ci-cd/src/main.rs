@@ -5,6 +5,8 @@ use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
 use tokio::{fs::canonicalize, process::Command};
+use tokio::time::timeout;
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Author {
@@ -43,7 +45,7 @@ struct PushPayload {
 #[tokio::main]
 async fn main() {
     
-    pull_and_restart().await;
+    par_loop(5).await;
 
     let app = Router::new()
     .route("/", post(handle_push));
@@ -65,8 +67,8 @@ async fn handle_push(Json(payload): Json<Value>) {
     if let Ok(push_payload) = serde_json::from_value::<PushPayload>(payload) {
 
         if push_payload.head_commit.author.name == "niooii" {
-
-            pull_and_restart().await;
+            
+           par_loop(5).await;
 
             println!("Finish");
 
@@ -78,7 +80,24 @@ async fn handle_push(Json(payload): Json<Value>) {
     }
 }
 
-async fn pull_and_restart() {
+async fn par_loop(max_retry: u16) {
+    let mut retry = 0_u16;
+    loop {
+        let result = pull_and_restart(20.0).await;
+
+        if result.is_ok() {
+            break;
+        } else {
+            if retry == max_retry {
+                break;
+            }
+            println!("\nRetrying ({retry} of {max_retry})...\n");
+            retry+=1;
+        }
+    }
+}
+
+async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     let mut docker_down = Command::new("docker");
     docker_down.args(["compose", "down"])
     .current_dir("../");
@@ -96,13 +115,22 @@ async fn pull_and_restart() {
     .current_dir("../");
 
     let commands = [docker_down, git_pull, docker_build, docker_up];
-
+    
     for mut command in commands {
-        let command_out = command.spawn().expect("Could not spawn process")
-        .wait_with_output().await.expect("failed to execute command").stdout;
-        
-        let stdout = String::from_utf8_lossy(&command_out);
-        
-        println!("{}", stdout);
+        let command_out = timeout(
+            Duration::from_secs_f32(timeout_secs),
+            command.spawn().expect("Could not spawn process")
+                .wait_with_output()
+        ).await.expect("failed to execute command");
+
+        if let Ok(output) = command_out {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            println!("{}", stdout);
+        } else {
+            return Err(format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
+        }
+
     }
+
+    Ok(())
 }
