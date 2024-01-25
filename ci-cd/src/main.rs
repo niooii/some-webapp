@@ -42,10 +42,18 @@ struct PushPayload {
 
 #[tokio::main]
 async fn main() {
+    
+    pull_and_restart().await;
+
     let app = Router::new()
     .route("/", post(handle_push));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:7777").await.unwrap();
+    let address = "0.0.0.0:7777";
+
+    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
+
+    println!("Now listening for github webhooks on {address}");
+
     axum::serve(listener, app).await.unwrap();
 
 }
@@ -58,37 +66,43 @@ async fn handle_push(Json(payload): Json<Value>) {
 
         if push_payload.head_commit.author.name == "niooii" {
 
-            let mut docker_down = Command::new("docker");
-            docker_down.args(["compose", "down"])
-            .current_dir("../");
+            pull_and_restart().await;
 
-            let mut git_pull = Command::new("git");
-            git_pull.arg("pull")
-            .current_dir("../");
+            println!("Finish");
 
-            let mut docker_build = Command::new("docker");
-            docker_build.args(["compose", "build"])
-            .current_dir("../");
-
-            let mut docker_up = Command::new("docker");
-            docker_up.args(["compose", "up", "-d"])
-            .current_dir("../");
-
-            let commands = [docker_down, git_pull, docker_build, docker_up];
-
-            for mut command in commands {
-                let command_out = command.spawn().expect("Could not spawn process")
-                .wait_with_output().await.expect("failed to execute command").stdout;
-                
-                let stdout = String::from_utf8_lossy(&command_out);
-                
-                println!("{}", stdout);
-            }
+        } else {
+            println!("Invalid head commit author.");
         }
-
-        println!("Finish");
-
     } else {
         println!("There was an error parsing the payload json...");
+    }
+}
+
+async fn pull_and_restart() {
+    let mut docker_down = Command::new("docker");
+    docker_down.args(["compose", "down"])
+    .current_dir("../");
+
+    let mut git_pull = Command::new("git");
+    git_pull.arg("pull")
+    .current_dir("../");
+
+    let mut docker_build = Command::new("docker");
+    docker_build.args(["compose", "build"])
+    .current_dir("../");
+
+    let mut docker_up = Command::new("docker");
+    docker_up.args(["compose", "up", "-d"])
+    .current_dir("../");
+
+    let commands = [docker_down, git_pull, docker_build, docker_up];
+
+    for mut command in commands {
+        let command_out = command.spawn().expect("Could not spawn process")
+        .wait_with_output().await.expect("failed to execute command").stdout;
+        
+        let stdout = String::from_utf8_lossy(&command_out);
+        
+        println!("{}", stdout);
     }
 }
