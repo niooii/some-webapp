@@ -67,6 +67,8 @@ async fn handle_push(Json(payload): Json<Value>) {
             docker_up.args(["compose", "up", "-d"])
             .current_dir(canonicalize("../").await.unwrap());
 
+            println!("{:?}", canonicalize("../").await.unwrap());
+
             let commands = [docker_down, docker_build, docker_up];
 
             for mut command in commands {
