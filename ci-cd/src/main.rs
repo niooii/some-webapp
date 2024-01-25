@@ -4,7 +4,7 @@ use axum::{extract::{Request, Json, Path, Extension, Query}, Router, routing::po
 use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
-use tokio::{fs::canonicalize, process::Command};
+use tokio::{process::Command};
 use tokio::time::timeout;
 use std::time::Duration;
 
