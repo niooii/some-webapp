@@ -45,7 +45,7 @@ struct PushPayload {
 #[tokio::main]
 async fn main() {
     
-    par_loop(5).await;
+    par_loop(10).await;
 
     let app = Router::new()
     .route("/", post(handle_push));
@@ -68,7 +68,7 @@ async fn handle_push(Json(payload): Json<Value>) {
 
         if push_payload.head_commit.author.name == "niooii" {
             
-           par_loop(5).await;
+           par_loop(10).await;
 
             println!("Finish");
 
@@ -83,7 +83,7 @@ async fn handle_push(Json(payload): Json<Value>) {
 async fn par_loop(max_retry: u16) {
     let mut retry = 0_u16;
     loop {
-        let result = pull_and_restart(20.0).await;
+        let result = pull_and_restart(40.0).await;
 
         if result.is_ok() {
             break;
@@ -123,10 +123,7 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
                 .wait_with_output()
         ).await.expect("failed to execute command");
 
-        if let Ok(output) = command_out {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            println!("{}", stdout);
-        } else {
+        if command_out.is_err() {
             return Err(format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
         }
 
