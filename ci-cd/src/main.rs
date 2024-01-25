@@ -51,11 +51,12 @@ async fn main() {
 }
 
 async fn handle_push(Json(payload): Json<Value>) {
+
+    println!("Recieved push payload");
+
     if let Ok(push_payload) = serde_json::from_value::<PushPayload>(payload) {
 
         if push_payload.head_commit.author.name == "niooii" {
-
-            println!("AWFWAFWA wtf man {:?}", canonicalize("../").await.unwrap());
 
             let mut docker_down = Command::new("docker");
             docker_down.args(["compose", "down"])
@@ -81,7 +82,7 @@ async fn handle_push(Json(payload): Json<Value>) {
             }
         }
 
-        println!("finish");
+        println!("Finish");
 
     } else {
         println!("There was an error parsing the payload json...");
