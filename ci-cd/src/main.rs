@@ -79,6 +79,8 @@ async fn handle_push(Json(payload): Json<Value>) {
             }
         }
 
+        println!("finish");
+
     } else {
         println!("There was an error parsing the payload json...");
     }
