@@ -55,6 +55,8 @@ async fn handle_push(Json(payload): Json<Value>) {
 
         if push_payload.head_commit.author.name == "niooii" {
 
+            println!("AWFWAFWA wtf man {:?}", canonicalize("../").await.unwrap());
+
             let mut docker_down = Command::new("docker");
             docker_down.args(["compose", "down"])
             .current_dir(canonicalize("../").await.unwrap());
@@ -66,8 +68,6 @@ async fn handle_push(Json(payload): Json<Value>) {
             let mut docker_up = Command::new("docker");
             docker_up.args(["compose", "up", "-d"])
             .current_dir(canonicalize("../").await.unwrap());
-
-            println!("AWFWAFWA wtf man {:?}", canonicalize("../").await.unwrap());
 
             let commands = [docker_down, docker_build, docker_up];
 
