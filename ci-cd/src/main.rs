@@ -59,15 +59,15 @@ async fn handle_push(Json(payload): Json<Value>) {
 
             let mut docker_down = Command::new("docker");
             docker_down.args(["compose", "down"])
-            .current_dir(canonicalize("../").await.unwrap());
+            .current_dir("../");
 
             let mut docker_build = Command::new("docker");
             docker_build.args(["compose", "build"])
-            .current_dir(canonicalize("../").await.unwrap());
+            .current_dir("../");
 
             let mut docker_up = Command::new("docker");
             docker_up.args(["compose", "up", "-d"])
-            .current_dir(canonicalize("../").await.unwrap());
+            .current_dir("../");
 
             let commands = [docker_down, docker_build, docker_up];
 
