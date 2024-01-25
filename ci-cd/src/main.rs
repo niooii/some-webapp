@@ -62,6 +62,10 @@ async fn handle_push(Json(payload): Json<Value>) {
             docker_down.args(["compose", "down"])
             .current_dir("../");
 
+            let mut git_pull = Command::new("git");
+            git_pull.arg("pull")
+            .current_dir("../");
+
             let mut docker_build = Command::new("docker");
             docker_build.args(["compose", "build"])
             .current_dir("../");
@@ -70,7 +74,7 @@ async fn handle_push(Json(payload): Json<Value>) {
             docker_up.args(["compose", "up", "-d"])
             .current_dir("../");
 
-            let commands = [docker_down, docker_build, docker_up];
+            let commands = [docker_down, git_pull, docker_build, docker_up];
 
             for mut command in commands {
                 let command_out = command.spawn().expect("Could not spawn process")
