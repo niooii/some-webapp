@@ -3,7 +3,7 @@ services:
     container_name: frontend
     build: ./frontend/
     ports:
-      - 443:8088
+      - 80:8088
     environment:
       - NEXT_TELEMETRY_DISABLED=1
       - NODE_ENV=development
