@@ -1,12 +1,11 @@
-use std::process::Stdio;
-
-use axum::{extract::{Request, Json, Path, Extension, Query}, Router, routing::post};
+use axum::{extract::Json, Router, routing::post};
 use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
-use tokio::{process::Command};
-use tokio::time::timeout;
+use std::{process::Command};
 use std::time::Duration;
+use wait_timeout::ChildExt;
+use std::process::{Child, ExitStatus};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Author {
@@ -117,15 +116,27 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     let commands = [docker_down, git_pull, docker_build, docker_up];
     
     for mut command in commands {
-        let command_out = timeout(
-            Duration::from_secs_f32(timeout_secs),
-            command.spawn().expect("Could not spawn process")
-                .wait_with_output()
-        ).await.expect("failed to execute command");
+        // let command_out = timeout(
+        //     Duration::from_secs_f32(timeout_secs),
+        //     command.spawn().expect("Could not spawn process")
+        //         .wait_with_output()
+        // ).await.expect("failed to execute command");
 
-        if command_out.is_err() {
-            return Err(format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
-        }
+        // if command_out.is_err() {
+        //     return Err(format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
+        // }
+
+        let mut child = command.spawn().unwrap();
+
+        match child.wait_timeout(Duration::from_secs_f32(timeout_secs)) {
+            Ok(status) => {
+                println!("finished command");
+            }
+            Err(_) => {
+                child.kill().unwrap();
+                println!("{}", format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
+            }
+        };
 
     }
 
