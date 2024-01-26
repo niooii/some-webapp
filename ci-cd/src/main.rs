@@ -45,7 +45,7 @@ struct PushPayload {
 #[tokio::main]
 async fn main() {
     
-    par_loop(10).await;
+    par_loop(10).await.expect("Reached max retry attempts. Exiting...");
 
     let app = Router::new()
     .route("/", post(handle_push));
