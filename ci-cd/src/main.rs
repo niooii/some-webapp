@@ -115,28 +115,24 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
 
     let commands = [docker_down, git_pull, docker_build, docker_up];
     
+    let mut i = 0_u16;
+    let num_commands = commands.iter().len() as u16;
     for mut command in commands {
-        // let command_out = timeout(
-        //     Duration::from_secs_f32(timeout_secs),
-        //     command.spawn().expect("Could not spawn process")
-        //         .wait_with_output()
-        // ).await.expect("failed to execute command");
-
-        // if command_out.is_err() {
-        //     return Err(format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
-        // }
 
         let mut child = command.spawn().unwrap();
 
         match child.wait_timeout(Duration::from_secs_f32(timeout_secs)) {
-            Ok(status) => {
-                println!("finished command");
+            Ok(_) => {
+                println!("\nFinished executing command {i} of {num_commands}\n");
             }
             Err(_) => {
                 child.kill().unwrap();
                 println!("{}", format!("Process has been executing for {timeout_secs} seconds, appears to be hung. Exiting early..."));
+                return Err("Process took too long.".into());
             }
         };
+        
+        i += 1;
 
     }
 
