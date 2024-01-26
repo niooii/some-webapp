@@ -2,6 +2,7 @@ use axum::{extract::Json, Router, routing::post};
 use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
+use tokio::time;
 use std::{process::Command};
 use std::time::Duration;
 use wait_timeout::ChildExt;
@@ -53,7 +54,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
 
-    println!("Now listening for github webhooks on {address}");
+    println!("Listening for github webhooks on {address}.");
 
     axum::serve(listener, app).await.unwrap();
 
@@ -61,15 +62,20 @@ async fn main() {
 
 async fn handle_push(Json(payload): Json<Value>) {
 
-    println!("Recieved push payload");
+    println!("\nRecieved push payload.\n");
+
+    let start = time::Instant::now();
 
     if let Ok(push_payload) = serde_json::from_value::<PushPayload>(payload) {
 
         if push_payload.head_commit.author.name == "niooii" {
-            
-           par_loop(10).await;
 
-            println!("Finish");
+            match par_loop(10).await {
+                Ok(_try) => println!("Command sequence finished executing successfully ({_try} tries.)"),
+                Err(e) => println!("{e}"),
+            }
+
+            println!("\nExecution finished in {:.2} seconds.\n", start.elapsed().as_secs_f32());
 
         } else {
             println!("Invalid head commit author.");
@@ -79,21 +85,23 @@ async fn handle_push(Json(payload): Json<Value>) {
     }
 }
 
-async fn par_loop(max_retry: u16) {
-    let mut retry = 0_u16;
+async fn par_loop(max_retry: u16) -> Result<u16, String> {
+    let mut _try = 1_u16;
     loop {
         let result = pull_and_restart(40.0).await;
 
         if result.is_ok() {
             break;
         } else {
-            if retry == max_retry {
-                break;
+            _try += 1;
+            if _try - 1 == max_retry {
+                return Err(format!("Retry limit reached ({max_retry})."));
             }
-            println!("\nRetrying ({retry} of {max_retry})...\n");
-            retry+=1;
+            println!("\nRetrying ({} of {max_retry})...\n", _try - 1);
         }
     }
+
+    Ok(_try)
 }
 
 async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
@@ -123,7 +131,7 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
 
         match child.wait_timeout(Duration::from_secs_f32(timeout_secs)) {
             Ok(_) => {
-                println!("\nFinished executing command {i} of {num_commands}\n");
+                println!("\nFinished executing command {i} of {num_commands}.\n");
             }
             Err(_) => {
                 child.kill().unwrap();
