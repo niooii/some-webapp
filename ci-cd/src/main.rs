@@ -115,7 +115,7 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
 
     let commands = [docker_down, git_pull, docker_build, docker_up];
     
-    let mut i = 0_u16;
+    let mut i = 1_u16;
     let num_commands = commands.iter().len() as u16;
     for mut command in commands {
 
