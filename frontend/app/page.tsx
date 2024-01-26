@@ -6,8 +6,8 @@ export default function Home() {
       <h1 className="text-9xl">
         To be, or not to be
       </h1>
-      <p className="text-6xl p-10">
-        That is the question
+      <p className="text-6xl py-12">
+        I had a question
       </p>
     </main>
   )
