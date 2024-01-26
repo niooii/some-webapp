@@ -54,7 +54,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(address).await.unwrap();
 
-    println!("Listening for github webhooks on {address}.");
+    println!("\nListening for github webhooks on {address}.\n");
 
     axum::serve(listener, app).await.unwrap();
 
