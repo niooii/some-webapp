@@ -13,6 +13,7 @@ export default function Home() {
       <p className="text-2xl py-12">
         🗣️🗣️🗣️🗣️🗣️
       </p>
+      <Button />
     </main>
   )
 }
