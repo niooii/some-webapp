@@ -26,7 +26,7 @@ async fn main() {
         .fallback_service(routes_static());
 
     // start server
-    let addr = "127.0.0.1:8082";
+    let addr = "0.0.0.0:9099";
     let listener = TcpListener::bind(addr).await.unwrap();
     println!("-> LISTENING on {addr}\n");
 
