@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Button from "./button";
 
 export default function Home() {
   return (
@@ -8,6 +8,10 @@ export default function Home() {
       </h1>
       <p className="text-6xl py-12">
         I had a question
+      </p>
+      <Button />
+      <p className="text-2xl py-12">
+        🗣️🗣️🗣️🗣️🗣️
       </p>
     </main>
   )
