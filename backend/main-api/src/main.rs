@@ -9,28 +9,36 @@ use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_cookies::CookieManagerLayer;
 
+use crate::model::ModelController;
+
 struct DbInfo {
     user: String,
     pass: String,
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    // init the model controller
+    let mc = ModelController::new().await?;
+
     let routes_all = Router::new().route(
         "/hello", 
         get(handler_hello)
     )
         .merge(web::routes_login::routes())
+        .nest("/api", web::routes_messages::routes(mc.clone()))
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
 
     // start server
-    let addr = "0.0.0.0:9099";
+    let addr = "127.0.0.1:9099";
     let listener = TcpListener::bind(addr).await.unwrap();
     println!("-> LISTENING on {addr}\n");
 
     axum::serve(listener, routes_all.into_make_service()).await.unwrap();
+
+    Ok(())
 }
 
 async fn main_response_mapper(res: Response) -> Response {

@@ -1,13 +1,13 @@
 use crate::model::{ModelController, Message, MessageCreateInfo};
 use crate::Result;
-use axum::extract::{Path, State};
+use axum::extract::{FromRef, Path, State};
 use axum::routing::{delete, post};
 use axum::{Json, Router};
 
 pub fn routes(mc: ModelController) -> Router {
     Router::new()
     .route("/messages", post(create_message).get(list_messages))
-    .route("/tickets/:id", delete(delete_message))
+    .route("/messages/:id", delete(delete_message))
     .with_state(mc)
 } 
 
