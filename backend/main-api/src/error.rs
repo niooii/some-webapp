@@ -8,7 +8,7 @@ pub enum Error {
     LoginFail,
 
     // MODEL ERRORS
-    MessageIdNotFound,
+    MessageIdNotFound{id: u64},
 }
 
 impl IntoResponse for Error {

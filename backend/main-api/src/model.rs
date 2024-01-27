@@ -4,7 +4,7 @@ use crate::{Error, Result};
 use serde::{Serialize, Deserialize};
 
 // TYPES
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Message {
     pub id: u64,
     pub time_created: u64,
@@ -12,6 +12,7 @@ pub struct Message {
     pub content: String,
 }
 
+#[derive(Deserialize)]
 pub struct MessageCreateInfo {
     pub title: String,
     pub content: String
@@ -68,6 +69,6 @@ impl ModelController {
 
         let message = store.get_mut(id as usize).and_then(|m| m.take());
 
-        message.ok_or(Error::MessageIdNotFound)
+        message.ok_or(Error::MessageIdNotFound{id})
     }
 }
