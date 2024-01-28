@@ -1,3 +1,5 @@
+mod webhook_notifier;
+
 use axum::{extract::Json, Router, routing::post};
 use serde_json::Value;
 
@@ -7,6 +9,8 @@ use std::{process::Command};
 use std::time::Duration;
 use wait_timeout::ChildExt;
 use std::process::{Child, ExitStatus};
+
+use crate::webhook_notifier::{Notifier, Stage};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Author {
@@ -45,7 +49,10 @@ struct PushPayload {
 #[tokio::main]
 async fn main() {
     
-    par_loop(10).await.expect("Reached max retry attempts. Exiting...");
+    let notifier = Notifier::new("https://discordapp.com/api/webhooks/1200995793310593136/JsRTQ0yetL5VowCnQ3t3k4tVujmkDYqjiXynOwftU_mi_3pWZWimn5EBlXNo0pommYdz").await
+    .unwrap();
+
+    par_loop(10, &notifier).await.expect("Reached max retry attempts. Exiting...");
 
     let app = Router::new()
     .route("/", post(handle_push));
@@ -62,7 +69,12 @@ async fn main() {
 
 async fn handle_push(Json(payload): Json<Value>) {
 
+    let notifier = Notifier::new("https://discordapp.com/api/webhooks/1200995793310593136/JsRTQ0yetL5VowCnQ3t3k4tVujmkDYqjiXynOwftU_mi_3pWZWimn5EBlXNo0pommYdz").await
+        .unwrap();
+
     println!("\nRecieved push payload.\n");
+
+    notifier.send(Stage::PushDetected, "@here").await.unwrap();
 
     let start = time::Instant::now();
 
@@ -70,11 +82,17 @@ async fn handle_push(Json(payload): Json<Value>) {
 
         if push_payload.head_commit.author.name == "niooii" {
 
-            match par_loop(10).await {
-                Ok(_try) => println!("Command sequence finished executing successfully ({_try} tries.)"),
-                Err(e) => println!("{e}"),
+            match par_loop(10, &notifier).await {
+                Ok(_try) => {
+                    println!("Command sequence finished executing successfully ({_try} tries.)");
+                    notifier.send(Stage::Finish { _try }, "@here").await.unwrap();
+                },
+                Err(e) => {
+                    println!("{e}");
+                    notifier.send(Stage::Fail, &e).await.unwrap();
+                },
             }
-
+            
             println!("\nExecution finished in {:.2} seconds.\n", start.elapsed().as_secs_f32());
 
         } else {
@@ -85,9 +103,13 @@ async fn handle_push(Json(payload): Json<Value>) {
     }
 }
 
-async fn par_loop(max_retry: u16) -> Result<u16, String> {
+async fn par_loop(max_retry: u16, notifier: &Notifier) -> Result<u16, String> {
     let mut _try = 1_u16;
+
     loop {
+        
+        notifier.send(Stage::Reloading { _try }, "@here").await.unwrap();
+
         let result = pull_and_restart(40.0).await;
 
         if result.is_ok() {

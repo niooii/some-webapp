@@ -1,7 +1,8 @@
 mod error;
-use error::{Error, Result};
+mod ctx;
 mod web;
 mod model;
+use error::{Error, Result};
 
 use axum::{Router, routing::{get, get_service}, response::{Html, IntoResponse, Response}, extract::Query, middleware};
 use serde::Deserialize;
