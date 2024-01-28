@@ -21,12 +21,12 @@ async fn main() -> Result<()> {
     // init the model controller
     let mc = ModelController::new().await?;
 
-    let routes_all = Router::new().route(
-        "/hello", 
-        get(handler_hello)
-    )
+    let routes_apis = web::routes_messages::routes(mc.clone())
+    .route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
+
+    let routes_all = Router::new()
         .merge(web::routes_login::routes())
-        .nest("/api", web::routes_messages::routes(mc.clone()))
+        .nest("/api", routes_apis)
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
@@ -52,15 +52,15 @@ fn routes_static() -> Router {
     Router::new().nest_service("/", get_service(ServeDir::new("./")))
 }
 
-#[derive(Debug, Deserialize)]
-struct HelloParams {
-    name: Option<String>
-}
+// #[derive(Debug, Deserialize)]
+// struct HelloParams {
+//     name: Option<String>
+// }
 
-async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
-    println!("->> {:<12} - handler_hello", "HANDLER");
+// async fn handler_hello(Query(params): Query<HelloParams>) -> impl IntoResponse {
+//     println!("->> {:<12} - handler_hello", "HANDLER");
 
-    let name = params.name.as_deref().unwrap_or("world");
+//     let name = params.name.as_deref().unwrap_or("world");
 
-    Html(format!("Hello <strong>{name}!!!!!</strong>"))
-}
+//     Html(format!("Hello <strong>{name}!!!!!</strong>"))
+// }
