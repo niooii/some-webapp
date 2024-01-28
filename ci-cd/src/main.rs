@@ -81,8 +81,8 @@ async fn handle_push(Json(payload): Json<Value>) {
     let start = time::Instant::now();
 
     if let Ok(push_payload) = serde_json::from_value::<PushPayload>(payload) {
-
-        if push_payload.head_commit.author.name == "niooii" {
+        // push_payload.head_commit.author.name == "niooii"
+        if true {
 
             match par_loop(10, &notifier).await {
                 Ok(_try) => {
