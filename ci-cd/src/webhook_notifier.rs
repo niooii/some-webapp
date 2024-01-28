@@ -44,7 +44,7 @@ impl Notifier {
         .embed(
             CreateEmbed::new().title(title)
             .color(color)
-            .field("[niooi.studio](http://niooi.studio)", content, true)
+            .field("http://niooi.studio", content, true)
         );
         self.webhook.execute(&self.http, false, builder).await?;
 

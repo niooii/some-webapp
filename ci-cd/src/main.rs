@@ -54,6 +54,8 @@ async fn main() {
 
     par_loop(10, &notifier).await.expect("Reached max retry attempts. Exiting...");
 
+
+
     let app = Router::new()
     .route("/", post(handle_push));
 
@@ -85,11 +87,9 @@ async fn handle_push(Json(payload): Json<Value>) {
             match par_loop(10, &notifier).await {
                 Ok(_try) => {
                     println!("Command sequence finished executing successfully ({_try} tries.)");
-                    notifier.send(Stage::Finish { _try }, "@here").await.unwrap();
                 },
                 Err(e) => {
                     println!("{e}");
-                    notifier.send(Stage::Fail, &e).await.unwrap();
                 },
             }
             
@@ -113,11 +113,14 @@ async fn par_loop(max_retry: u16, notifier: &Notifier) -> Result<u16, String> {
         let result = pull_and_restart(40.0).await;
 
         if result.is_ok() {
+            notifier.send(Stage::Finish { _try }, "@here").await.unwrap();
             break;
         } else {
             _try += 1;
             if _try - 1 == max_retry {
-                return Err(format!("Retry limit reached ({max_retry})."));
+                let fail_string = format!("Retry limit reached ({max_retry}).");
+                notifier.send(Stage::Fail, format!("@here\n{fail_string}").as_str()).await.unwrap();
+                return Err(fail_string);
             }
             println!("\nRetrying ({} of {max_retry})...\n", _try - 1);
         }
