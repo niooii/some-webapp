@@ -1,16 +1,18 @@
 mod error;
-mod ctx;
 mod web;
-mod model;
+mod models;
 use error::{Error, Result};
+use serde_json::json;
+use crate::models::message::MessageModelController;
 
-use axum::{Router, routing::{get, get_service}, response::{Html, IntoResponse, Response}, extract::Query, middleware};
+use axum::{extract::Query, middleware, response::{Html, IntoResponse, Response}, routing::{get, get_service}, Json, Router};
 use serde::Deserialize;
+use sqlx::PgPool;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_cookies::CookieManagerLayer;
-
-use crate::model::ModelController;
+use dotenv::dotenv;
+use std::env;
 
 struct DbInfo {
     user: String,
@@ -19,21 +21,27 @@ struct DbInfo {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // init the model controller
-    let mc = ModelController::new().await?;
 
-    let routes_apis = web::routes_messages::routes(mc.clone())
-    .route_layer(middleware::from_fn(web::mw_auth::mw_require_auth));
+    dotenv().expect("Failed to load env from .env");
+    
+    // aquire database connectiosn etc etc
+    
+    let db_pool = PgPool::connect(
+        env::var("DATABASE_URL").expect("Could not find DATABASE_URL in env").as_str()
+    ).await.map_err(|_| Error::DatabaseConnectionError)?;
+
+    let mc = MessageModelController::new(db_pool).await?;
+
+    let message_routes = web::routes_messages::routes(mc.clone());
 
     let routes_all = Router::new()
-        .merge(web::routes_login::routes())
-        .nest("/api", routes_apis)
-        .layer(middleware::map_response(main_response_mapper))
-        .layer(CookieManagerLayer::new())
-        .fallback_service(routes_static());
+    .nest("/api", message_routes)
+    .layer(middleware::map_response(main_response_mapper))
+    .layer(CookieManagerLayer::new())
+    .fallback_service(routes_static());
 
     // start server
-    let addr = "127.0.0.1:9099";
+    let addr = "0.0.0.0:9099";
     let listener = TcpListener::bind(addr).await.unwrap();
     println!("-> LISTENING on {addr}\n");
 
@@ -42,16 +50,33 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn main_response_mapper(res: Response) -> Response {
-    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
-
-    println!();
-    res
-}
-
 fn routes_static() -> Router {
     Router::new().nest_service("/", get_service(ServeDir::new("./")))
 }
+
+async fn main_response_mapper(res: Response) -> Response {
+    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+
+    let error = res.extensions().get::<Error>();
+
+    let sc_and_ce = error.map(|se| se.to_status_and_client_error());
+
+    let error_response = sc_and_ce
+        .as_ref()
+        .map(|(status_code, client_err)| {
+            let body = json!({
+                "error": {
+                    "type": client_err.as_ref()
+                }
+            });
+
+            (*status_code, Json(body)).into_response()
+
+        });
+
+    error_response.unwrap_or(res)
+}
+
 
 // #[derive(Debug, Deserialize)]
 // struct HelloParams {

@@ -15,8 +15,10 @@ serde = {version = "1", features = ["derive"]}
 axum = {version = "0.7.3", features = ["macros"]}
 tower-http = { version = "0.5.0", features = ["fs"] }
 tower-cookies = "0.10.0"
-sqlx = {version = "0.7.3", features = ["postgres"]}
+sqlx = {version = "0.7.3", features = ["postgres", "runtime-tokio", "chrono", "uuid", "macros"]}
 lazy-regex = "3.1.0"
+async-trait = "0.1.77"
+strum_macros = "0.26.1"
 
 [dev-dependencies]
 httpc-test = "0.1.1"
