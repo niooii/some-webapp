@@ -130,12 +130,12 @@ async fn par_loop(max_retry: u16, notifier: &Notifier) -> Result<u16, String> {
 }
 
 async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
-    let mut docker_down = Command::new("docker");
-    docker_down.args(["compose", "down"])
-    .current_dir("../");
-
     let mut stop_niooi_backend = Command::new("docker");
     stop_niooi_backend.args(["stop", "niooi_backend"])
+    .current_dir("../");
+
+    let mut docker_down = Command::new("docker");
+    docker_down.args(["compose", "down"])
     .current_dir("../");
 
     let mut git_pull = Command::new("git");
@@ -151,7 +151,7 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     .current_dir("../");
 
     let mut build_niooi_backend = Command::new("docker");
-    build_niooi_backend.args(["build", "--tag", "'niooi_backend'", ".", "--network=host"])
+    build_niooi_backend.args(["build", "--tag=niooi_backend", ".", "--network=host"])
     .current_dir("../backend");
 
     let mut run_niooi_backend = Command::new("docker");
