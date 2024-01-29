@@ -6,7 +6,6 @@ use serde_json::json;
 use crate::models::message::MessageModelController;
 
 use axum::{extract::Query, middleware, response::{Html, IntoResponse, Response}, routing::{get, get_service}, Json, Router};
-use serde::Deserialize;
 use sqlx::PgPool;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
