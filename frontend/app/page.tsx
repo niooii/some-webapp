@@ -11,7 +11,7 @@ export default function Home() {
       </p>
       <Button />
       <p className="text-2xl py-12">
-        v0.1.2
+        v0.1.3
       </p>
     </main>
   )
