@@ -7,24 +7,26 @@ services:
     environment:
       - NEXT_TELEMETRY_DISABLED=1
       - NODE_ENV=development
-    depends_on:
-      - backend
+    # depends_on:
+    #   - backend
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
 
-  backend:
-    container_name: backend
-    build: ./backend/
-    restart: always
-    ports:
-      - 9099:9099
-    environment:
-      - RUST_BACKTRACE=1
-      #- DATABASE_URL=postgres://niooi:abcde@db:5432/postgres
-    depends_on:
-      - db
+  # backend:
+  #   container_name: backend
+  #   build:
+  #     context: ./backend/
+  #     network: host
+  #   restart: always
+  #   ports:
+  #     - 9099:9099
+  #   environment:
+  #     - RUST_BACKTRACE=1
+  #     - DATABASE_URL=postgres://niooi:abcde@127.0.0.1:9432/postgres
+  #   depends_on:
+  #     - db
 
   db:
     container_name: db

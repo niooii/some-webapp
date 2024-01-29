@@ -146,7 +146,15 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     docker_up.args(["compose", "up", "-d"])
     .current_dir("../");
 
-    let commands = [docker_down, git_pull, docker_build, docker_up];
+    let mut build_niooi_backend = Command::new("docker");
+    build_niooi_backend.args(["build", "--tag", "--name=niooi_backend", "-d", "niooi_backend"])
+    .current_dir("../backend");
+
+    let mut run_niooi_backend = Command::new("docker");
+    run_niooi_backend.args(["run", "--net=host", "'niooi_backend'", ".", "--network=host"])
+    .current_dir("../backend");
+
+    let commands = [docker_down, git_pull, docker_build, docker_up, build_niooi_backend, run_niooi_backend];
     
     let mut i = 1_u16;
     let num_commands = commands.iter().len() as u16;
