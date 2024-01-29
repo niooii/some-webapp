@@ -30,6 +30,8 @@ async fn main() -> Result<()> {
         env::var("DATABASE_URL").expect("Could not find DATABASE_URL in env").as_str()
     ).await.map_err(|_| Error::DatabaseConnectionError)?;
 
+    sqlx::migrate!("../migrations").run(&db_pool).await.expect("Failed to run migrations.");
+
     let mc = MessageModelController::new(db_pool).await?;
 
     let message_routes = web::routes_messages::routes(mc.clone());
