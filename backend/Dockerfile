@@ -20,6 +20,6 @@ RUN cargo build --release
 FROM ubuntu:latest
 
 COPY --from=builder /app/target/release/main-api /
-COPY --from=builder /app/.env /
+COPY --from=builder /app/main-api/.env /
 
 CMD ["./main-api"]
