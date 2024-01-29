@@ -110,7 +110,7 @@ async fn par_loop(max_retry: u16, notifier: &Notifier) -> Result<u16, String> {
         
         notifier.send(Stage::Reloading { _try }, "@here").await.unwrap();
 
-        let result = pull_and_restart(40.0).await;
+        let result = pull_and_restart(600.0).await;
 
         if result.is_ok() {
             notifier.send(Stage::Finish { _try }, "@here").await.unwrap();
@@ -134,6 +134,10 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     docker_down.args(["compose", "down"])
     .current_dir("../");
 
+    let mut stop_niooi_backend = Command::new("docker");
+    stop_niooi_backend.args(["stop", "niooi_backend"])
+    .current_dir("../");
+
     let mut git_pull = Command::new("git");
     git_pull.arg("pull")
     .current_dir("../");
@@ -154,7 +158,7 @@ async fn pull_and_restart(timeout_secs: f32) -> Result<(), String> {
     run_niooi_backend.args(["run", "--net=host", "'niooi_backend'", ".", "--network=host"])
     .current_dir("../backend");
 
-    let commands = [docker_down, git_pull, docker_build, docker_up, build_niooi_backend, run_niooi_backend];
+    let commands = [docker_down, stop_niooi_backend, git_pull, docker_build, docker_up, build_niooi_backend, run_niooi_backend];
     
     let mut i = 1_u16;
     let num_commands = commands.iter().len() as u16;
