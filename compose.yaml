@@ -25,7 +25,7 @@ services:
     environment:
       - RUST_BACKTRACE=1
       - DATABASE_URL=postgres://niooi:abcde@127.0.0.1:9432/postgres
-    depends_on:
+    # depends_on:
       # - db
 
 volumes:
