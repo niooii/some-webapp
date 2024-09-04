@@ -25,11 +25,11 @@ pub struct MessageCreateInfo {
 
 // MODEL CONTROLLER
 #[derive(Clone)]
-pub struct MessageModelController {
+pub struct MessageController {
     db_pool: PgPool
 }
 
-impl MessageModelController {
+impl MessageController {
     pub async fn new(db_pool: PgPool) -> Result<Self> {
         Ok(
             Self {
@@ -39,7 +39,7 @@ impl MessageModelController {
     }
 }
 
-impl MessageModelController {
+impl MessageController {
     pub async fn create_message(&self, message_ci: MessageCreateInfo) -> Result<Message> {
         let start = SystemTime::now();
         let since_the_epoch = start

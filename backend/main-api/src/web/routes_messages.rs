@@ -1,10 +1,10 @@
-use crate::models::message::{MessageModelController, Message, MessageCreateInfo};
+use crate::model::message::{MessageController, Message, MessageCreateInfo};
 use crate::Result;
 use axum::extract::{FromRef, Path, State};
 use axum::routing::{delete, post};
 use axum::{Json, Router};
 
-pub fn routes(mc: MessageModelController) -> Router {
+pub fn routes(mc: MessageController) -> Router {
     Router::new()
     .route("/messages", post(create_message).get(list_messages))
     .route("/messages/:id", delete(delete_message))
@@ -12,7 +12,7 @@ pub fn routes(mc: MessageModelController) -> Router {
 } 
 
 async fn create_message(
-    State(mc): State<MessageModelController>, 
+    State(mc): State<MessageController>, 
     Json(message_ci): Json<MessageCreateInfo>
 ) -> Result<Json<Message>> {
 
@@ -24,7 +24,7 @@ async fn create_message(
 }
 
 async fn list_messages(
-    State(mc): State<MessageModelController>,
+    State(mc): State<MessageController>,
 ) -> Result<Json<Vec<Message>>> {
 
     println!("->> {:<12} - list_messages", "HANDLER");
@@ -35,7 +35,7 @@ async fn list_messages(
 }
 
 async fn delete_message(
-    State(mc): State<MessageModelController>, Path(id): Path<u64>,
+    State(mc): State<MessageController>, Path(id): Path<u64>,
 ) -> Result<Json<Message>> {
     println!("->> {:<12} - delete_message", "HANDLER");
 

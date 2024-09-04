@@ -1,9 +1,10 @@
 mod error;
 mod web;
-mod models;
+mod model;
 use error::{Error, Result};
+use log::{debug, error, log_enabled, info, Level};
 use serde_json::json;
-use crate::models::message::MessageModelController;
+use crate::model::message::MessageController;
 
 use axum::{extract::Query, middleware, response::{Html, IntoResponse, Response}, routing::{get, get_service}, Json, Router};
 use sqlx::PgPool;
@@ -22,8 +23,7 @@ struct DbInfo {
 async fn main() -> Result<()> {
 
     dotenv().expect("Failed to load env from .env");
-    
-    // aquire database connectiosn etc etc
+    env_logger::init();
     
     let db_pool = PgPool::connect(
         env::var("DATABASE_URL").expect("Could not find DATABASE_URL in env").as_str()
@@ -31,7 +31,8 @@ async fn main() -> Result<()> {
 
     sqlx::migrate!("../migrations").run(&db_pool).await.expect("Failed to run migrations.");
 
-    let mc = MessageModelController::new(db_pool).await?;
+    // Initialize controllers
+    let mc = MessageController::new(db_pool).await?;
 
     let message_routes = web::routes_messages::routes(mc.clone());
 
@@ -44,7 +45,7 @@ async fn main() -> Result<()> {
     // start server
     let addr = "0.0.0.0:9099";
     let listener = TcpListener::bind(addr).await.unwrap();
-    println!("-> LISTENING on {addr}\n");
+    info!("-> LISTENING on {addr}\n");
 
     axum::serve(listener, routes_all.into_make_service()).await.unwrap();
 
