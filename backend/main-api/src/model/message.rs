@@ -13,14 +13,16 @@ pub struct Message {
     pub content: String,
 }
 
-impl Message {
-    
-}
-
 #[derive(Deserialize)]
 pub struct MessageCreateInfo {
     pub title: String,
     pub content: String
+}
+
+#[derive(Deserialize)]
+pub struct MessageFetchInfo {
+    pub before_id: Option<u64>,
+    pub amount: u8
 }
 
 // MODEL CONTROLLER
@@ -40,7 +42,7 @@ impl MessageController {
 }
 
 impl MessageController {
-    pub async fn create_message(&self, message_ci: MessageCreateInfo) -> Result<Message> {
+    pub async fn create_message(&self, create_info: MessageCreateInfo) -> Result<Message> {
         let start = SystemTime::now();
         let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
@@ -51,8 +53,8 @@ impl MessageController {
             "INSERT INTO messages_to_world (title, content, time_created)
             VALUES ($1, $2, $3)
             RETURNING *",
-            message_ci.title,
-            message_ci.content,
+            create_info.title,
+            create_info.content,
             since_the_epoch.as_secs() as i64
         ).fetch_one(&self.db_pool).await
         .map_err(|_| Error::DatabaseQueryError)?;
@@ -60,13 +62,30 @@ impl MessageController {
         Ok(message)
     }
 
-    pub async fn list_messages(&self) -> Result<Vec<Message>> {
+    pub async fn list_messages(&self, fetch_info: MessageFetchInfo) -> Result<Vec<Message>> {
+        if fetch_info.amount > 100 || fetch_info.amount == 0 {
+            return Err(Error::BadValue { reason: String::from("Requested amount must be at least 1 and less than 100.") });
+        }
 
-        let messages = sqlx::query_as!(
-            Message,
-            "select * from messages_to_world"
-        ).fetch_all(&self.db_pool).await
-        .map_err(|_| Error::DatabaseQueryError)?;
+        let messages = if let Some(before_id) = fetch_info.before_id {
+            sqlx::query_as!(
+                Message,
+                "SELECT * FROM messages_to_world
+                WHERE id < $1
+                ORDER BY id DESC
+                LIMIT $2",
+                before_id as i64,
+                fetch_info.amount as i64
+            ).fetch_all(&self.db_pool).await
+        } else {
+            sqlx::query_as!(
+                Message,
+                "SELECT * FROM messages_to_world
+                ORDER BY id DESC
+                LIMIT $1",
+                fetch_info.amount as i64
+            ).fetch_all(&self.db_pool).await
+        }.map_err(|_| Error::DatabaseQueryError)?;
 
         Ok(messages)
     }

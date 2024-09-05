@@ -22,6 +22,7 @@ pub enum Error {
 
     // MODEL ERRORS
     MessageIdNotFound{id: u64},
+    BadValue{reason: String}
 }
 
 #[derive(Debug, AsRefStr, Serialize)]

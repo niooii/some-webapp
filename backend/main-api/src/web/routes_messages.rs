@@ -1,4 +1,4 @@
-use crate::model::message::{MessageController, Message, MessageCreateInfo};
+use crate::model::message::{Message, MessageController, MessageCreateInfo, MessageFetchInfo};
 use crate::Result;
 use axum::extract::{FromRef, Path, State};
 use axum::routing::{delete, post};
@@ -13,23 +13,18 @@ pub fn routes(mc: MessageController) -> Router {
 
 async fn create_message(
     State(mc): State<MessageController>, 
-    Json(message_ci): Json<MessageCreateInfo>
+    Json(create_info): Json<MessageCreateInfo>
 ) -> Result<Json<Message>> {
-
-    println!("->> {:<12} - create_message", "HANDLER");
-
-    let message = mc.create_message(message_ci).await?;
+    let message = mc.create_message(create_info).await?;
 
     Ok(Json(message))
 }
 
 async fn list_messages(
     State(mc): State<MessageController>,
+    Json(fetch_info): Json<MessageFetchInfo>
 ) -> Result<Json<Vec<Message>>> {
-
-    println!("->> {:<12} - list_messages", "HANDLER");
-
-    let messages = mc.list_messages().await?;
+    let messages = mc.list_messages(fetch_info).await?;
 
     Ok(Json(messages))
 }
@@ -37,8 +32,6 @@ async fn list_messages(
 async fn delete_message(
     State(mc): State<MessageController>, Path(id): Path<u64>,
 ) -> Result<Json<Message>> {
-    println!("->> {:<12} - delete_message", "HANDLER");
-
     let message = mc.delete_message(id).await?;
 
     Ok(Json(message))

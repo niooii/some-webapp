@@ -14,11 +14,6 @@ use tower_cookies::CookieManagerLayer;
 use dotenv::dotenv;
 use std::env;
 
-struct DbInfo {
-    user: String,
-    pass: String,
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
 
@@ -57,7 +52,7 @@ fn routes_static() -> Router {
 }
 
 async fn main_response_mapper(res: Response) -> Response {
-    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+    info!("->> {:<12} - main_response_mapper", "RES_MAPPER");
 
     let error = res.extensions().get::<Error>();
 
