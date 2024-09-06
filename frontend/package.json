@@ -13,9 +13,12 @@
     "@mantine/form": "^7.12.2",
     "@mantine/hooks": "^7.8.1",
     "@mantinex/mantine-header": "^1.0.2",
+    "axios": "^1.7.7",
+    "http-proxy-middleware": "^3.0.2",
     "next": "14.2.3",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@types/node": "^20",

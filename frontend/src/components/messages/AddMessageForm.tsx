@@ -31,7 +31,7 @@ export default function AddMessageForm() {
         <Textarea
             withAsterisk
             label="Content"
-            placeholder="your@email.com"
+            placeholder="blah blah blah"
             key={form.key('content')}
             maxLength={2000}
             maxRows={5}

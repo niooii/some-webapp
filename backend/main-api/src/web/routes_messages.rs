@@ -1,6 +1,6 @@
 use crate::model::message::{Message, MessageController, MessageCreateInfo, MessageFetchInfo};
 use crate::Result;
-use axum::extract::{FromRef, Path, State};
+use axum::extract::{FromRef, Path, Query, State};
 use axum::routing::{delete, post};
 use axum::{Json, Router};
 
@@ -22,7 +22,7 @@ async fn create_message(
 
 async fn list_messages(
     State(mc): State<MessageController>,
-    Json(fetch_info): Json<MessageFetchInfo>
+    Query(fetch_info): Query<MessageFetchInfo>
 ) -> Result<Json<Vec<Message>>> {
     let messages = mc.list_messages(fetch_info).await?;
 
